@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { X, Cpu, Check, Monitor } from 'lucide-react'
+import { X, Cpu, Check, Monitor, RefreshCw } from 'lucide-react'
 import { type BacklogItem, type Status, STATUS_LABELS } from '../data/mock'
+import { refreshMediaItem } from '../lib/backlog-service'
 import StarRating from './StarRating'
 
 const STATUS_COLORS: Record<Status, string> = {
@@ -47,6 +48,19 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
   const [review, setReview] = useState(item.review || '')
   const [obtained, setObtained] = useState<boolean>(item.obtained ?? false)
   const [runs, setRuns] = useState<boolean | null | undefined>(item.runs)
+  const [refreshing, setRefreshing] = useState(false)
+  const [localItem, setLocalItem] = useState<BacklogItem>(item)
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    const updates = await refreshMediaItem(localItem)
+    if (updates) {
+      const merged = { ...localItem, ...updates }
+      setLocalItem(merged)
+      onUpdate(item.id, updates)
+    }
+    setRefreshing(false)
+  }
 
   function handleStatusChange(newStatus: Status) {
     setStatus(newStatus)
@@ -78,37 +92,43 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
         className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-bg-1 border border-bg-2/60 rounded-xl shadow-2xl animate-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-text-2 hover:text-text-0 hover:bg-bg-2 transition-colors z-10"
-        >
-          <X size={18} />
-        </button>
+        <div className="absolute top-4 right-4 flex items-center gap-1 z-10">
+          {localItem.source && (
+            <button onClick={handleRefresh} disabled={refreshing} title="Atualizar metadados"
+              className="p-1.5 rounded-lg text-text-2 hover:text-accent-2 hover:bg-bg-2 transition-colors disabled:opacity-40">
+              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+            </button>
+          )}
+          <button onClick={onClose}
+            className="p-1.5 rounded-lg text-text-2 hover:text-text-0 hover:bg-bg-2 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
 
         <div className="p-6 pb-0">
           <div className="flex gap-6 mb-4">
             <div className="w-32 h-44 rounded-card overflow-hidden bg-bg-2 shrink-0">
               <img
-                src={item.coverUrl}
-                alt={item.title}
+                src={localItem.coverUrl}
+                alt={localItem.title}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="flex-1 min-w-0 pt-1">
               <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-text-2">
-                {KIND_LABELS[item.kind]}
-                {item.platform && (
-                  <span className="font-mono ml-2">{item.platform}</span>
+                {KIND_LABELS[localItem.kind]}
+                {localItem.platform && (
+                  <span className="font-mono ml-2">{localItem.platform}</span>
                 )}
-                {item.releaseYear && <span className="ml-2">{item.releaseYear}</span>}
+                {localItem.releaseYear && <span className="ml-2">{localItem.releaseYear}</span>}
               </span>
               <h2 className="font-display text-xl font-bold tracking-tight mt-1 pr-8">
-                {item.title}
+                {localItem.title}
               </h2>
 
-              {item.synopsis && (
+              {localItem.synopsis && (
                 <p className="text-[12px] text-text-2 leading-relaxed mt-3 pr-8">
-                  {item.synopsis}
+                  {localItem.synopsis}
                 </p>
               )}
             </div>

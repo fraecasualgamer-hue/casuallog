@@ -4,6 +4,8 @@ export type Tier = number | null
 
 export interface BacklogItem {
   id: string
+  source?: string
+  sourceId?: string
   title: string
   coverUrl: string
   kind: MediaKind

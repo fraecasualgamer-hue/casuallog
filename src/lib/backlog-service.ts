@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, getSupabase } from './supabase'
 import type { BacklogItem, Status, Tier } from '../data/mock'
 
 // Mapeia uma linha de progress + media_items (join) para BacklogItem
@@ -6,6 +6,8 @@ function rowToItem(row: any): BacklogItem {
   const m = row.media_items
   return {
     id: m.id,
+    source: m.source ?? undefined,
+    sourceId: m.source_id ?? undefined,
     title: m.title,
     coverUrl: m.cover_url ?? '',
     kind: m.kind,
@@ -152,6 +154,54 @@ export async function addToBacklog(
     platform: item.platform,
   })
   return mediaId
+}
+
+export async function refreshMediaItem(item: BacklogItem): Promise<Partial<BacklogItem> | null> {
+  if (!item.source || !item.sourceId) return null
+  try {
+    const sb = getSupabase()
+    const source = item.source as 'igdb' | 'tmdb' | 'anilist' | 'books'
+    const sourceMap: Record<string, string> = {
+      igdb: 'igdb', tmdb: 'tmdb', anilist: 'anilist', books: 'books',
+    }
+    const { data, error } = await sb.functions.invoke('search-media', {
+      body: { query: item.title, sources: [sourceMap[source]] },
+    })
+    if (error || !Array.isArray(data)) return null
+
+    const match = data.find((r: any) => String(r.sourceId) === String(item.sourceId))
+    if (!match) return null
+
+    const updates: any = {
+      genre: match.genre ?? null,
+      developer: match.developer ?? null,
+      director: match.director ?? null,
+      duration: match.duration ?? null,
+      where_to_watch: match.whereToWatch ?? null,
+      author: match.author ?? null,
+      publisher: match.publisher ?? null,
+      volumes: match.volumes ?? null,
+      synopsis: match.synopsis ?? null,
+      available_platforms: match.availablePlatforms ?? null,
+      cached_at: new Date().toISOString(),
+    }
+    await sb.from('media_items').update(updates).eq('id', item.id)
+
+    return {
+      genre: match.genre ?? undefined,
+      developer: match.developer ?? undefined,
+      director: match.director ?? undefined,
+      duration: match.duration ?? undefined,
+      whereToWatch: match.whereToWatch ?? undefined,
+      author: match.author ?? undefined,
+      publisher: match.publisher ?? undefined,
+      volumes: match.volumes ?? undefined,
+      synopsis: match.synopsis ?? undefined,
+      availablePlatforms: match.availablePlatforms ?? undefined,
+    }
+  } catch {
+    return null
+  }
 }
 
 export async function removeFromBacklog(userId: string, mediaItemId: string) {
