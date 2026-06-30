@@ -203,7 +203,7 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
   try {
     const keyParam = GOOGLE_BOOKS_KEY ? `&key=${GOOGLE_BOOKS_KEY}` : ''
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20&langRestrict=pt&orderBy=relevance${keyParam}`,
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20&orderBy=relevance${keyParam}`,
     )
     const data = await res.json()
     const seenTitles = new Set<string>()
