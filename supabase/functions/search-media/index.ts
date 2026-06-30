@@ -203,19 +203,22 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
   try {
     const keyParam = GOOGLE_BOOKS_KEY ? `&key=${GOOGLE_BOOKS_KEY}` : ''
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20&orderBy=relevance${keyParam}`,
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=40&orderBy=relevance${keyParam}`,
     )
     const data = await res.json()
     const seenTitles = new Set<string>()
     const results: SearchResult[] = []
 
     for (const b of data.items ?? []) {
-      const cover = b.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:')
-      if (!cover) continue // pula edições sem capa (metadado incompleto)
+      if (!b.volumeInfo?.title) continue
 
       const normalizedTitle = b.volumeInfo.title.toLowerCase().trim()
-      if (seenTitles.has(normalizedTitle)) continue // evita duplicatas da mesma obra
+      if (seenTitles.has(normalizedTitle)) continue
       seenTitles.add(normalizedTitle)
+
+      const cover = b.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:')
+        ?? b.volumeInfo.imageLinks?.smallThumbnail?.replace('http:', 'https:')
+        ?? null
 
       results.push({
         source: 'books',
@@ -234,7 +237,7 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
       })
 
-      if (results.length >= 5) break
+      if (results.length >= 8) break
     }
 
     return results
