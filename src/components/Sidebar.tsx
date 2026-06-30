@@ -9,13 +9,13 @@ const mainNav = [
   { to: '/', icon: Home, label: 'Início' },
   { to: '/backlog', icon: Library, label: 'Meu backlog' },
   { to: '/listas', icon: LayoutList, label: 'Minhas listas' },
-  { to: '/explorar', icon: Compass, label: 'Explorar' },
-  { to: '/clans', icon: Shield, label: 'Clãs' },
+  { to: '/explorar', icon: Compass, label: 'Explorar', disabled: true },
+  { to: '/clans', icon: Shield, label: 'Clãs', disabled: true },
 ]
 
 const secondaryNav = [
-  { to: '/diario', icon: BookOpen, label: 'Diário' },
-  { to: '/conquistas', icon: Trophy, label: 'Conquistas' },
+  { to: '/diario', icon: BookOpen, label: 'Diário', disabled: true },
+  { to: '/conquistas', icon: Trophy, label: 'Conquistas', disabled: true },
 ]
 
 const SOCIAL_SUBS = [
@@ -86,6 +86,18 @@ function SocialItem({ pendingCount }: { pendingCount: number }) {
   )
 }
 
+function NavItemDisabled({ icon: Icon, label }: { icon: typeof Home; label: string }) {
+  return (
+    <div className="flex items-center gap-3 px-2.5 py-2 rounded-[10px] text-[14px] font-medium opacity-35 cursor-not-allowed select-none">
+      <span className="nav-tile"><Icon size={15} strokeWidth={1.8} /></span>
+      <span className="flex-1">{label}</span>
+      <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-text-2/20 text-text-2/60">
+        em breve
+      </span>
+    </div>
+  )
+}
+
 function NavItem({ to, icon: Icon, label, badgeCount }: { to: string; icon: typeof Home; label: string; badgeCount?: number }) {
   return (
     <NavLink
@@ -144,9 +156,11 @@ export default function Sidebar() {
 
       <nav className="flex-1 px-3 space-y-6 overflow-y-auto">
         <div className="space-y-0.5">
-          {mainNav.map((item) => (
-            <NavItem key={item.to} {...item} />
-          ))}
+          {mainNav.map((item) =>
+            item.disabled
+              ? <NavItemDisabled key={item.to} icon={item.icon} label={item.label} />
+              : <NavItem key={item.to} {...item} />
+          )}
         </div>
         <div>
           <p className="px-3 mb-2 text-[10px] font-display font-bold uppercase tracking-[0.15em] text-text-2/50 flex items-center gap-2">
@@ -154,10 +168,12 @@ export default function Sidebar() {
             Pessoal
           </p>
           <div className="space-y-0.5">
-            {secondaryNav.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
-            <SocialItem pendingCount={pendingCount} />
+            {secondaryNav.map((item) =>
+              item.disabled
+                ? <NavItemDisabled key={item.to} icon={item.icon} label={item.label} />
+                : <NavItem key={item.to} {...item} />
+            )}
+            <NavItemDisabled icon={Users} label="Social" />
           </div>
         </div>
       </nav>
