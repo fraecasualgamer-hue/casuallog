@@ -6,6 +6,7 @@ import {
   Check, Pencil, Cpu, Clock, Play, Pause, RotateCcw, CheckCircle, Hammer, Camera,
 } from 'lucide-react'
 import { useLists } from '../context/ListsContext'
+import { useBacklog } from '../context/BacklogContext'
 import { uploadImage } from '../lib/storage'
 import { getListTypeConfig, LIST_STATUS_LABELS, type ListItem } from '../data/list-rules'
 import TopBar from '../components/TopBar'
@@ -25,18 +26,6 @@ const KIND_ICON: Record<string, typeof Gamepad2> = {
   game: Gamepad2, movie: Film, series: Tv, anime: Tv, manga: BookOpen, book: BookOpen,
 }
 
-const searchCatalog = [
-  { id: 's1', title: 'God of War Ragnarök', coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5s5v.webp', kind: 'game', platform: 'PS5', releaseYear: 2022, developer: 'Santa Monica Studio' },
-  { id: 's2', title: "Baldur's Gate 3", coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co670h.webp', kind: 'game', platform: 'PC', releaseYear: 2023, developer: 'Larian Studios' },
-  { id: 's3', title: 'Ghost of Tsushima', coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co2gs5.webp', kind: 'game', platform: 'PS5', releaseYear: 2020, developer: 'Sucker Punch' },
-  { id: 's4', title: 'Sekiro: Shadows Die Twice', coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7f.webp', kind: 'game', platform: 'PC', releaseYear: 2019, developer: 'FromSoftware' },
-  { id: 's5', title: 'Hollow Knight', coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1rgi.webp', kind: 'game', platform: 'PC', releaseYear: 2017, developer: 'Team Cherry' },
-  { id: 's6', title: 'Interstellar', coverUrl: 'https://image.tmdb.org/t/p/w300/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', kind: 'movie', releaseYear: 2014 },
-  { id: 's7', title: 'Vagabond', coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx656-TkWVFE3MWAAY.jpg', kind: 'manga', releaseYear: 1998 },
-  { id: 's8', title: 'Neon Genesis Evangelion', coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx30.jpg', kind: 'anime', releaseYear: 1995 },
-  { id: 's9', title: 'The Witcher 3', coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.webp', kind: 'game', platform: 'PC', releaseYear: 2015, developer: 'CD Projekt Red' },
-  { id: 's10', title: 'Celeste', coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co3byy.webp', kind: 'game', platform: 'Switch', releaseYear: 2018, developer: 'Maddy Makes Games' },
-]
 
 function fmtPrice(value?: number | null) {
   if (value == null) return ''
@@ -57,7 +46,8 @@ const EMPTY = <span className="text-text-2/30">—</span>;
 export default function ListViewPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { lists, updateList, removeItemFromList, addItemToList, updateListItem, reorderListItems, markReady, startList, pauseList, resumeList, completeList, resetList } = useLists()
+  const { lists, updateList, removeItemFromList, addItemToList, updateListItem, reorderListItems, markReady, startList, pauseList, resumeList, completeList, resetList, deleteList } = useLists()
+  const { items: backlogItems } = useBacklog()
   const [showAddModal, setShowAddModal] = useState(false)
   const [addQuery, setAddQuery] = useState('')
   const [addRole, setAddRole] = useState<'principal' | 'upgrade'>('principal')
@@ -69,6 +59,7 @@ export default function ListViewPage() {
   const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(null)
   const [statusDropdownPos, setStatusDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const [showEditList, setShowEditList] = useState(false)
+  const [showDeleteListConfirm, setShowDeleteListConfirm] = useState(false)
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [editTheme, setEditTheme] = useState('')
@@ -145,7 +136,7 @@ export default function ListViewPage() {
     setDraft({})
   }
 
-  function handleAddItem(item: typeof searchCatalog[0]) {
+  function handleAddItem(item: (typeof backlogItems)[0]) {
     const newItem: ListItem = {
       id: `li-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       mediaItemId: item.id,
@@ -156,15 +147,15 @@ export default function ListViewPage() {
       role: addRole,
       obtained: false,
       releaseYear: item.releaseYear,
-      developer: (item as any).developer,
+      developer: item.developer,
       position: list!.items.length,
     }
     addItemToList(list!.id, newItem)
   }
 
-  const addResults = addQuery.length >= 2
-    ? searchCatalog.filter((s) => s.title.toLowerCase().includes(addQuery.toLowerCase()))
-    : searchCatalog
+  const addResults = backlogItems.filter((s) =>
+    addQuery.length < 2 || s.title.toLowerCase().includes(addQuery.toLowerCase())
+  )
 
   function renderItem(item: ListItem, _group: ListItem[], groupIdx: number) {
     const Icon = KIND_ICON[item.kind] ?? Gamepad2
@@ -491,6 +482,10 @@ export default function ListViewPage() {
                 setShowEditList(true)
               }} className="p-1.5 rounded-[8px] text-text-2 hover:bg-bg-2/40 hover:text-text-1 transition-all" title="Editar lista">
                 <Pencil size={13} />
+              </button>
+              <button onClick={() => setShowDeleteListConfirm(true)}
+                className="p-1.5 rounded-[8px] text-text-2 hover:bg-status-abandoned/15 hover:text-status-abandoned transition-all" title="Deletar lista">
+                <Trash2 size={13} />
               </button>
             </div>
             {list.theme && <p className="text-[13px] text-text-1 mt-1">Tema: {list.theme}</p>}
@@ -851,6 +846,36 @@ export default function ListViewPage() {
                   Salvar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteListConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteListConfirm(false)}>
+          <div className="absolute inset-0 bg-bg-0/85 backdrop-blur-md animate-backdrop" />
+          <div className="relative w-full max-w-sm bg-bg-1 border border-bg-2/60 rounded-xl shadow-2xl p-6 animate-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-status-abandoned/15 text-status-abandoned shrink-0">
+                <Trash2 size={16} />
+              </div>
+              <div>
+                <p className="text-[15px] font-semibold text-text-0">Deletar lista?</p>
+                <p className="text-[12px] text-text-2 mt-0.5">Essa ação não pode ser desfeita.</p>
+              </div>
+            </div>
+            <p className="text-[13px] text-text-1 mb-6">
+              A lista <span className="font-semibold text-text-0">"{list.title}"</span> e todas as suas obras serão removidas permanentemente.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowDeleteListConfirm(false)}
+                className="flex-1 py-2.5 rounded-card border border-bg-2 text-text-1 text-[13px] hover:bg-bg-2/30 transition-all">
+                Cancelar
+              </button>
+              <button onClick={() => { deleteList(list.id); navigate('/listas') }}
+                className="flex-1 py-2.5 rounded-card bg-status-abandoned/15 text-status-abandoned border border-status-abandoned/30 text-[13px] font-semibold hover:bg-status-abandoned/25 transition-all">
+                Deletar
+              </button>
             </div>
           </div>
         </div>
