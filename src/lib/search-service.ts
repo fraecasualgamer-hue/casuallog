@@ -17,6 +17,7 @@ export interface SearchResult {
   developer?: string | null
   availablePlatforms?: string[]
   synopsis?: string | null
+  whereToWatch?: string | null
 }
 
 export async function searchMedia(

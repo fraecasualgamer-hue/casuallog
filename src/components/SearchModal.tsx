@@ -74,6 +74,7 @@ export default function SearchModal({ onClose, onAdd, existingIds }: Props) {
     developer: r.developer,
     availablePlatforms: r.availablePlatforms,
     synopsis: r.synopsis,
+    whereToWatch: r.whereToWatch,
   }))
 
   function handleAdd(item: typeof displayResults[0]) {
@@ -93,6 +94,7 @@ export default function SearchModal({ onClose, onAdd, existingIds }: Props) {
       developer: item.developer ?? undefined,
       availablePlatforms: item.availablePlatforms,
       synopsis: item.synopsis ?? undefined,
+      whereToWatch: item.whereToWatch ?? undefined,
       status: 'quero',
       tier: null,
       seals: [],

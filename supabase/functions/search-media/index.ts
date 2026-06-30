@@ -96,25 +96,32 @@ const TMDB_GENRES: Record<number, string> = {
   10765: 'Ficção Científica e Fantasia', 10766: 'Novela', 10767: 'Talk Show', 10768: 'Guerra e Política',
 }
 
-async function fetchTMDBDetails(id: number, type: 'movie' | 'tv'): Promise<{ director: string | null; duration: string | null }> {
+async function fetchTMDBDetails(id: number, type: 'movie' | 'tv'): Promise<{ director: string | null; duration: string | null; whereToWatch: string | null }> {
   try {
     const endpoint = type === 'movie'
-      ? `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=pt-BR&append_to_response=credits`
-      : `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_KEY}&language=pt-BR&append_to_response=credits`
+      ? `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=pt-BR&append_to_response=credits,watch/providers`
+      : `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_KEY}&language=pt-BR&append_to_response=credits,watch/providers`
     const res = await fetch(endpoint)
     const d = await res.json()
+
+    const brProviders = d['watch/providers']?.results?.BR
+    const flatrate: any[] = brProviders?.flatrate ?? []
+    const whereToWatch = flatrate.length > 0
+      ? flatrate.slice(0, 3).map((p: any) => p.provider_name).join(', ')
+      : null
+
     if (type === 'movie') {
       const director = d.credits?.crew?.find((c: any) => c.job === 'Director')?.name ?? null
       const runtime = d.runtime ? `${d.runtime} min` : null
-      return { director, duration: runtime }
+      return { director, duration: runtime, whereToWatch }
     } else {
       const creator = d.created_by?.[0]?.name ?? null
       const ep = d.episode_run_time?.[0]
       const duration = ep ? `${ep} min/ep` : null
-      return { director: creator, duration }
+      return { director: creator, duration, whereToWatch }
     }
   } catch {
-    return { director: null, duration: null }
+    return { director: null, duration: null, whereToWatch: null }
   }
 }
 
@@ -131,7 +138,7 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
 
     return await Promise.all(hits.map(async (r: any) => {
       const type = r.media_type === 'movie' ? 'movie' : 'tv'
-      const { director, duration } = await fetchTMDBDetails(r.id, type)
+      const { director, duration, whereToWatch } = await fetchTMDBDetails(r.id, type)
       return {
         source: 'tmdb',
         sourceId: String(r.id),
@@ -148,6 +155,7 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
         synopsis: r.overview ? r.overview.slice(0, 300) : null,
         director,
         duration,
+        whereToWatch,
         _pop: r.popularity ?? 0,
       }
     }))
