@@ -277,7 +277,7 @@ export default function BacklogPage() {
               Todos
               <span className="ml-1.5 text-[10px] opacity-70">{subFiltered.length}</span>
             </button>
-            {(Object.keys(statusLabels) as Status[]).map((status) => (
+            {(Object.keys(statusLabels) as Status[]).filter((s) => s !== 'na_estante' || category === 'games').map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
