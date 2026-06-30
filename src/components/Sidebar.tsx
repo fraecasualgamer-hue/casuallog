@@ -136,7 +136,7 @@ export default function Sidebar() {
 
       <div className="px-4 pt-5 pb-2">
         <div className="flex items-center justify-center py-2">
-          <img src={logo} alt="CasualLog" className="h-16 w-auto" />
+          <img src={logo} alt="CasualLog" className="h-28 w-auto" />
         </div>
         {/* brandline volt */}
         <div className="mt-3 mx-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(43,245,160,.55), rgba(43,245,160,.05) 60%, transparent)' }} />

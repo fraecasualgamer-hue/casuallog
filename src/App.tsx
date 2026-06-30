@@ -30,7 +30,7 @@ function AppShell() {
     return (
       <div className="min-h-screen bg-bg-0 flex items-center justify-center">
         <div className="text-center">
-          <img src={logo} alt="CasualLog" className="h-14 w-auto mx-auto mb-3" />
+          <img src={logo} alt="CasualLog" className="h-28 w-auto mx-auto mb-3" />
           <p className="text-sm text-text-2">Carregando...</p>
         </div>
       </div>

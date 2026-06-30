@@ -8,7 +8,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-bg-0 flex items-center justify-center px-4">
       <div className="w-full max-w-xs text-center animate-slide-up">
         <div className="flex justify-center mb-6">
-          <img src={logo} alt="CasualLog" className="h-20 w-auto" />
+          <img src={logo} alt="CasualLog" className="h-36 w-auto" />
         </div>
         <p className="text-text-2 text-[13px] mb-10 leading-relaxed">
           Sua jornada começa aqui.<br />No seu tempo.
