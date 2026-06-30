@@ -73,7 +73,7 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
           genre: g.genres?.[0]?.name ?? null,
           developer,
           availablePlatforms: platforms.length > 0 ? platforms : undefined,
-          synopsis: g.summary ?? null,
+          synopsis: g.summary ? g.summary.slice(0, 300) : null,
           _pop: (IGDB_CATEGORY_PRIORITY.has(g.category) ? 10000 : 0) + (g.rating_count ?? 0),
         } as SearchResult,
       }
@@ -119,7 +119,7 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
           : null,
         genre: r.genre_ids?.[0] ? TMDB_GENRES[r.genre_ids[0]] ?? null : null,
         platform: null,
-        synopsis: r.overview || null,
+        synopsis: r.overview ? r.overview.slice(0, 300) : null,
         _pop: r.popularity ?? 0,
       }))
   } catch {
@@ -176,7 +176,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       genre: m.genres?.[0] ?? null,
       director: m.studios?.nodes?.[0]?.name ?? null,
       duration: m.episodes ? `${m.episodes} episódios` : null,
-      synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 400) : null,
+      synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
       _pop: m.popularity ?? (1000 - i * 100),
     }))
     const manga = (mangaData.data?.Page?.media ?? []).map((m: any, i: number) => ({
@@ -190,7 +190,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       genre: m.genres?.[0] ?? null,
       author: m.staff?.edges?.[0]?.node?.name?.full ?? null,
       volumes: m.volumes ? `${m.volumes} volumes` : m.chapters ? `${m.chapters} capítulos` : null,
-      synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 400) : null,
+      synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
       _pop: m.popularity ?? (1000 - i * 100),
     }))
     return [...anime, ...manga]
@@ -231,7 +231,7 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         publisher: b.volumeInfo.publisher ?? null,
         genre: b.volumeInfo.categories?.[0] ?? null,
         volumes: b.volumeInfo.pageCount ? `${b.volumeInfo.pageCount} páginas` : null,
-        synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 400) : null,
+        synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
       })
 
       if (results.length >= 5) break
