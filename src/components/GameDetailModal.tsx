@@ -143,7 +143,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
 
           <div className="flex flex-wrap gap-2 pb-6 border-b border-bg-2/40">
             {(Object.keys(STATUS_COLORS) as Status[])
-              .filter((s) => s !== 'na_estante' || item.kind === 'game')
+              .filter((s) => s !== 'na_estante' || localItem.kind === 'game')
               .map((s) => (
                 <button
                   key={s}
@@ -154,14 +154,14 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
                       : 'border-bg-2 text-text-2 hover:border-text-2/40 hover:text-text-1'
                   }`}
                 >
-                  {getStatusLabels(item.kind)[s]}
+                  {getStatusLabels(localItem.kind)[s]}
                 </button>
               ))}
           </div>
         </div>
 
         <div className="p-6 space-y-7">
-          {item.kind === 'game' && (
+          {localItem.kind === 'game' && (
             <section className="space-y-2">
               <div className="flex items-center justify-between px-4 py-3 rounded-card border border-bg-2">
                 <div className="flex items-center gap-2.5">
@@ -232,7 +232,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
             <p className="text-[10px] text-text-2/50 mt-2.5">Clique na mesma estrela para remover a nota</p>
           </section>
 
-          {item.kind === 'game' && item.availablePlatforms && item.availablePlatforms.length > 0 && (
+          {localItem.kind === 'game' && item.availablePlatforms && item.availablePlatforms.length > 0 && (
             <section>
               <h3 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-2 mb-3">
                 <Monitor size={13} />
