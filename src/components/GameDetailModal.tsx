@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { X, Cpu, Check, Monitor, RefreshCw } from 'lucide-react'
+import { X, Cpu, Check, Monitor } from 'lucide-react'
 import { type BacklogItem, type Status, STATUS_LABELS } from '../data/mock'
-import { refreshMediaItem } from '../lib/backlog-service'
 import StarRating from './StarRating'
 
 const STATUS_COLORS: Record<Status, string> = {
@@ -48,19 +47,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
   const [review, setReview] = useState(item.review || '')
   const [obtained, setObtained] = useState<boolean>(item.obtained ?? false)
   const [runs, setRuns] = useState<boolean | null | undefined>(item.runs)
-  const [refreshing, setRefreshing] = useState(false)
-  const [localItem, setLocalItem] = useState<BacklogItem>(item)
-
-  async function handleRefresh() {
-    setRefreshing(true)
-    const updates = await refreshMediaItem(localItem)
-    if (updates) {
-      const merged = { ...localItem, ...updates }
-      setLocalItem(merged)
-      onUpdate(item.id, updates)
-    }
-    setRefreshing(false)
-  }
+  const [localItem] = useState<BacklogItem>(item)
 
   function handleStatusChange(newStatus: Status) {
     setStatus(newStatus)
@@ -93,12 +80,6 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-4 right-4 flex items-center gap-1 z-10">
-          {localItem.source && (
-            <button onClick={handleRefresh} disabled={refreshing} title="Atualizar metadados"
-              className="p-1.5 rounded-lg text-text-2 hover:text-accent-2 hover:bg-bg-2 transition-colors disabled:opacity-40">
-              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
-            </button>
-          )}
           <button onClick={onClose}
             className="p-1.5 rounded-lg text-text-2 hover:text-text-0 hover:bg-bg-2 transition-colors">
             <X size={18} />
