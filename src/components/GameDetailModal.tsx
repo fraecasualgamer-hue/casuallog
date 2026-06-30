@@ -106,14 +106,41 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
         </div>
 
         <div className="p-6 pb-0">
-          <div className="flex gap-6 mb-4">
-            <div className="w-32 h-44 rounded-card overflow-hidden bg-bg-2 shrink-0">
-              <img
-                src={localItem.coverUrl}
-                alt={localItem.title}
-                className="w-full h-full object-cover"
-              />
+          <div className="flex gap-6 mb-6">
+            {/* Coluna esquerda: capa + metadados audiovisuais */}
+            <div className="shrink-0 flex flex-col gap-3">
+              <div className="w-32 h-44 rounded-card overflow-hidden bg-bg-2">
+                <img
+                  src={localItem.coverUrl}
+                  alt={localItem.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              {['movie', 'series', 'anime'].includes(localItem.kind) && (localItem.director || localItem.duration || localItem.whereToWatch) && (
+                <div className="flex flex-col gap-2 w-32">
+                  {localItem.director && (
+                    <div>
+                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block mb-0.5">Diretor</span>
+                      <span className="text-[11px] text-text-1 leading-snug block">{localItem.director}</span>
+                    </div>
+                  )}
+                  {localItem.duration && (
+                    <div>
+                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block mb-0.5">Duração</span>
+                      <span className="text-[11px] text-text-1">{localItem.duration}</span>
+                    </div>
+                  )}
+                  {localItem.whereToWatch && (
+                    <div>
+                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block mb-0.5">Onde assistir</span>
+                      <span className="text-[11px] text-text-1 leading-snug block">{localItem.whereToWatch}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Coluna direita: título + sinopse */}
             <div className="flex-1 min-w-0 pt-1">
               <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-text-2">
                 {KIND_LABELS[localItem.kind]}
@@ -125,46 +152,22 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
               <h2 className="font-display text-xl font-bold tracking-tight mt-1 pr-8">
                 {localItem.title}
               </h2>
-
               {localItem.synopsis && (
                 <p className="text-[12px] text-text-2 leading-relaxed mt-3 pr-8">
                   {localItem.synopsis}
                 </p>
               )}
-
-              {['movie', 'series', 'anime'].includes(localItem.kind) && (localItem.director || localItem.duration || localItem.whereToWatch) && (
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
-                  {localItem.director && (
-                    <div>
-                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block">Diretor</span>
-                      <span className="text-[12px] text-text-1">{localItem.director}</span>
-                    </div>
-                  )}
-                  {localItem.duration && (
-                    <div>
-                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block">Duração</span>
-                      <span className="text-[12px] text-text-1">{localItem.duration}</span>
-                    </div>
-                  )}
-                  {localItem.whereToWatch && (
-                    <div>
-                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block">Onde assistir</span>
-                      <span className="text-[12px] text-text-1">{localItem.whereToWatch}</span>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2 pb-6 border-b border-bg-2/40">
             {(Object.keys(STATUS_COLORS) as Status[])
               .filter((s) => s !== 'na_estante' || item.kind === 'game')
               .map((s) => (
                 <button
                   key={s}
                   onClick={() => handleStatusChange(s)}
-                  className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all duration-150 ${
+                  className={`text-[11px] font-medium px-3.5 py-2 rounded-full border transition-all duration-150 ${
                     status === s
                       ? STATUS_COLORS[s]
                       : 'border-bg-2 text-text-2 hover:border-text-2/40 hover:text-text-1'
@@ -176,7 +179,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-7">
           {item.kind === 'game' && (
             <section className="space-y-2">
               <div className="flex items-center justify-between px-4 py-3 rounded-card border border-bg-2">
@@ -236,7 +239,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
           )}
 
           <section>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-2 mb-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-2 mb-4">
               Como foi a jornada?
             </h3>
             <StarRating
@@ -245,7 +248,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
               size={28}
               showValue
             />
-            <p className="text-[10px] text-text-2/50 mt-2">Clique na mesma estrela para remover a nota</p>
+            <p className="text-[10px] text-text-2/50 mt-2.5">Clique na mesma estrela para remover a nota</p>
           </section>
 
           {item.kind === 'game' && item.availablePlatforms && item.availablePlatforms.length > 0 && (
@@ -278,7 +281,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
           )}
 
           <section>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-2 mb-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-2 mb-4">
               Resenha
             </h3>
             <textarea
