@@ -26,6 +26,7 @@ interface SearchResult {
   duration?: string | null
   developer?: string | null
   availablePlatforms?: string[]
+  synopsis?: string | null
   _pop?: number // popularidade interna para ordenação, removido antes de retornar
 }
 
@@ -43,7 +44,7 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
         Authorization: `Bearer ${IGDB_TOKEN}`,
         'Content-Type': 'text/plain',
       },
-      body: `search "${query}"; fields name,cover.image_id,first_release_date,platforms.abbreviation,genres.name,involved_companies.company.name,involved_companies.developer,category,rating_count; limit 15;`,
+      body: `search "${query}"; fields name,cover.image_id,first_release_date,platforms.abbreviation,genres.name,involved_companies.company.name,involved_companies.developer,category,rating_count,summary; limit 15;`,
     })
     const data = await res.json()
     if (!Array.isArray(data)) return []
@@ -72,6 +73,7 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
           genre: g.genres?.[0]?.name ?? null,
           developer,
           availablePlatforms: platforms.length > 0 ? platforms : undefined,
+          synopsis: g.summary ?? null,
           _pop: (IGDB_CATEGORY_PRIORITY.has(g.category) ? 10000 : 0) + (g.rating_count ?? 0),
         } as SearchResult,
       }
@@ -117,6 +119,7 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
           : null,
         genre: r.genre_ids?.[0] ? TMDB_GENRES[r.genre_ids[0]] ?? null : null,
         platform: null,
+        synopsis: r.overview || null,
         _pop: r.popularity ?? 0,
       }))
   } catch {
@@ -130,7 +133,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       query: `query ($search: String) {
         Page(perPage: 6) {
           media(search: $search, type: ANIME, sort: POPULARITY_DESC) {
-            id title { romaji } coverImage { large } startDate { year } format episodes genres popularity
+            id title { romaji } coverImage { large } startDate { year } format episodes genres popularity description
             studios(isMain: true) { nodes { name } }
           }
         }
@@ -141,7 +144,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       query: `query ($search: String) {
         Page(perPage: 4) {
           media(search: $search, type: MANGA, sort: POPULARITY_DESC) {
-            id title { romaji } coverImage { large } startDate { year } format volumes chapters genres popularity
+            id title { romaji } coverImage { large } startDate { year } format volumes chapters genres popularity description
             staff(perPage: 1, sort: RELEVANCE) { edges { node { name { full } } } }
           }
         }
@@ -173,6 +176,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       genre: m.genres?.[0] ?? null,
       director: m.studios?.nodes?.[0]?.name ?? null,
       duration: m.episodes ? `${m.episodes} episódios` : null,
+      synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 400) : null,
       _pop: m.popularity ?? (1000 - i * 100),
     }))
     const manga = (mangaData.data?.Page?.media ?? []).map((m: any, i: number) => ({
@@ -186,6 +190,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       genre: m.genres?.[0] ?? null,
       author: m.staff?.edges?.[0]?.node?.name?.full ?? null,
       volumes: m.volumes ? `${m.volumes} volumes` : m.chapters ? `${m.chapters} capítulos` : null,
+      synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 400) : null,
       _pop: m.popularity ?? (1000 - i * 100),
     }))
     return [...anime, ...manga]
@@ -226,6 +231,7 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         publisher: b.volumeInfo.publisher ?? null,
         genre: b.volumeInfo.categories?.[0] ?? null,
         volumes: b.volumeInfo.pageCount ? `${b.volumeInfo.pageCount} páginas` : null,
+        synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 400) : null,
       })
 
       if (results.length >= 5) break

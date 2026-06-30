@@ -16,6 +16,7 @@ export interface SearchResult {
   duration?: string | null
   developer?: string | null
   availablePlatforms?: string[]
+  synopsis?: string | null
 }
 
 export async function searchMedia(

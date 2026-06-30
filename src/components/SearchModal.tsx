@@ -73,6 +73,7 @@ export default function SearchModal({ onClose, onAdd, existingIds }: Props) {
     duration: r.duration,
     developer: r.developer,
     availablePlatforms: r.availablePlatforms,
+    synopsis: r.synopsis,
   }))
 
   function handleAdd(item: typeof displayResults[0]) {
@@ -91,6 +92,7 @@ export default function SearchModal({ onClose, onAdd, existingIds }: Props) {
       duration: item.duration ?? undefined,
       developer: item.developer ?? undefined,
       availablePlatforms: item.availablePlatforms,
+      synopsis: item.synopsis ?? undefined,
       status: 'quero',
       tier: null,
       seals: [],
