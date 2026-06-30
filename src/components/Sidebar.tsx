@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Home, Library, LayoutList, Compass, User, LogOut, BookOpen, Trophy, Users, Shield, Zap, ChevronDown } from 'lucide-react'
+import { Home, Library, LayoutList, Compass, User, LogOut, BookOpen, Trophy, Users, Shield, Zap } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useSocial } from '../context/SocialContext'
 import logo from '../assets/logo.png'
 
 const mainNav = [
@@ -18,73 +16,6 @@ const secondaryNav = [
   { to: '/conquistas', icon: Trophy, label: 'Conquistas', disabled: true },
 ]
 
-const SOCIAL_SUBS = [
-  { tab: 'feed',      label: 'Feed' },
-  { tab: 'amigos',    label: 'Amigos',    badge: true },
-  { tab: 'atividade', label: 'Atividade' },
-]
-
-function SocialItem({ pendingCount }: { pendingCount: number }) {
-  const location  = useLocation()
-  const navigate  = useNavigate()
-  const isOnSocial = location.pathname === '/conexoes'
-  const activeTab  = new URLSearchParams(location.search).get('tab') || 'feed'
-  const [open, setOpen] = useState(isOnSocial)
-
-  useEffect(() => { if (isOnSocial) setOpen(true) }, [isOnSocial])
-
-  function toggle() {
-    if (!isOnSocial) navigate('/conexoes?tab=feed')
-    setOpen((v) => !v)
-  }
-
-  return (
-    <div>
-      <button
-        onClick={toggle}
-        className={`nav-indicator ${isOnSocial ? 'active' : ''} flex items-center gap-3 px-2.5 py-2 rounded-[10px] text-[14px] font-medium transition-all duration-200 w-full ${
-          isOnSocial ? 'bg-accent/8 text-accent' : 'text-text-1 hover:bg-bg-2/30 hover:text-text-0'
-        }`}
-        style={isOnSocial ? { boxShadow: 'inset 0 0 0 1px rgba(43,245,160,.16)' } : {}}
-      >
-        <span className="nav-tile"><Users size={15} strokeWidth={1.8} /></span>
-        <span className="flex-1 text-left">Social</span>
-        {!open && pendingCount > 0 && (
-          <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-status-playing text-bg-0 text-[9px] font-bold px-1"
-            style={{ boxShadow: '0 0 8px rgba(255,45,143,.5)' }}>
-            {pendingCount}
-          </span>
-        )}
-        <ChevronDown size={12} strokeWidth={2} className={`transition-transform duration-200 text-text-2/50 ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      {open && (
-        <div className="ml-[30px] mt-0.5 mb-1 pl-3 border-l border-bg-2/35 space-y-0.5">
-          {SOCIAL_SUBS.map((sub) => {
-            const active = isOnSocial && activeTab === sub.tab
-            return (
-              <NavLink
-                key={sub.tab}
-                to={`/conexoes?tab=${sub.tab}`}
-                className={`flex items-center justify-between py-1.5 px-2 rounded-[7px] text-[13px] transition-all duration-150 ${
-                  active ? 'text-accent font-semibold' : 'text-text-2 hover:text-text-1'
-                }`}
-              >
-                <span>{sub.label}</span>
-                {sub.badge && pendingCount > 0 && (
-                  <span className="min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-status-playing text-bg-0 text-[9px] font-bold px-1"
-                    style={{ boxShadow: '0 0 8px rgba(255,45,143,.5)' }}>
-                    {pendingCount}
-                  </span>
-                )}
-              </NavLink>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function NavItemDisabled({ icon: Icon, label }: { icon: typeof Home; label: string }) {
   return (
@@ -127,13 +58,6 @@ function NavItem({ to, icon: Icon, label, badgeCount }: { to: string; icon: type
 
 export default function Sidebar() {
   const { user, profile, signOut } = useAuth()
-  let pendingCount = 0
-  try {
-    const social = useSocial()
-    pendingCount = social.pendingCount
-  } catch {
-    // SocialProvider not mounted yet (onboarding)
-  }
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[220px] bg-bg-1/80 backdrop-blur-md flex flex-col z-30 border-r border-bg-3/25" style={{ position: 'fixed' }}>

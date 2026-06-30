@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Cpu, Check, Monitor } from 'lucide-react'
-import { type BacklogItem, type Status, STATUS_LABELS } from '../data/mock'
+import { type BacklogItem, type Status } from '../data/mock'
 import StarRating from './StarRating'
 
 const STATUS_COLORS: Record<Status, string> = {
