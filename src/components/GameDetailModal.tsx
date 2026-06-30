@@ -72,47 +72,49 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
           <X size={18} />
         </button>
 
-        <div className="flex gap-6 p-6 pb-0">
-          <div className="w-32 h-44 rounded-card overflow-hidden bg-bg-2 shrink-0">
-            <img
-              src={item.coverUrl}
-              alt={item.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1 min-w-0 pt-1">
-            <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-text-2">
-              {KIND_LABELS[item.kind]}
-              {item.platform && (
-                <span className="font-mono ml-2">{item.platform}</span>
-              )}
-              {item.releaseYear && <span className="ml-2">{item.releaseYear}</span>}
-            </span>
-            <h2 className="font-display text-xl font-bold tracking-tight mt-1 pr-8">
-              {item.title}
-            </h2>
-
-            {item.synopsis && (
-              <p className="text-[12px] text-text-2 leading-relaxed mt-3 pr-8">
-                {item.synopsis}
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-1.5 mt-4">
-              {(Object.keys(STATUS_LABELS) as Status[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => handleStatusChange(s)}
-                  className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all duration-150 ${
-                    status === s
-                      ? STATUS_COLORS[s]
-                      : 'border-bg-2 text-text-2 hover:border-text-2/40 hover:text-text-1'
-                  }`}
-                >
-                  {STATUS_LABELS[s]}
-                </button>
-              ))}
+        <div className="p-6 pb-0">
+          <div className="flex gap-6 mb-4">
+            <div className="w-32 h-44 rounded-card overflow-hidden bg-bg-2 shrink-0">
+              <img
+                src={item.coverUrl}
+                alt={item.title}
+                className="w-full h-full object-cover"
+              />
             </div>
+            <div className="flex-1 min-w-0 pt-1">
+              <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-text-2">
+                {KIND_LABELS[item.kind]}
+                {item.platform && (
+                  <span className="font-mono ml-2">{item.platform}</span>
+                )}
+                {item.releaseYear && <span className="ml-2">{item.releaseYear}</span>}
+              </span>
+              <h2 className="font-display text-xl font-bold tracking-tight mt-1 pr-8">
+                {item.title}
+              </h2>
+
+              {item.synopsis && (
+                <p className="text-[12px] text-text-2 leading-relaxed mt-3 pr-8">
+                  {item.synopsis}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {(Object.keys(STATUS_LABELS) as Status[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => handleStatusChange(s)}
+                className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all duration-150 ${
+                  status === s
+                    ? STATUS_COLORS[s]
+                    : 'border-bg-2 text-text-2 hover:border-text-2/40 hover:text-text-1'
+                }`}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            ))}
           </div>
         </div>
 
