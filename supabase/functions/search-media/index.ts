@@ -242,13 +242,31 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
   }
 }
 
+async function fetchOpenLibrarySubjects(query: string): Promise<Map<string, string>> {
+  const subjectMap = new Map<string, string>()
+  try {
+    const res = await fetch(
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&fields=title,subject&limit=15`,
+    )
+    const data = await res.json()
+    const GENERIC = new Set(['fiction', 'nonfiction', 'accessible book', 'protected daisy', 'in library', 'large type books'])
+    for (const doc of data.docs ?? []) {
+      if (!doc.title || !Array.isArray(doc.subject)) continue
+      const subject = doc.subject.find((s: string) => !GENERIC.has(s.toLowerCase()) && s.length > 2)
+      if (subject) subjectMap.set(doc.title.toLowerCase(), subject)
+    }
+  } catch { /* silently fail */ }
+  return subjectMap
+}
+
 async function searchBooks(query: string): Promise<SearchResult[]> {
   try {
     const keyParam = GOOGLE_BOOKS_KEY ? `&key=${GOOGLE_BOOKS_KEY}` : ''
-    const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=40&orderBy=relevance${keyParam}`,
-    )
-    const data = await res.json()
+    const [booksRes, olSubjects] = await Promise.all([
+      fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=40&orderBy=relevance${keyParam}`),
+      fetchOpenLibrarySubjects(query),
+    ])
+    const data = await booksRes.json()
     const seenTitles = new Set<string>()
     const results: SearchResult[] = []
 
@@ -263,6 +281,13 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         ?? b.volumeInfo.imageLinks?.smallThumbnail?.replace('http:', 'https:')
         ?? null
 
+      const rawCat = b.volumeInfo.categories?.[0] ?? null
+      const genre = rawCat ? rawCat.split(' / ')[0].trim() : null
+      const subgenreFromCat = rawCat?.includes(' / ')
+        ? rawCat.split(' / ')[1].trim()
+        : (b.volumeInfo.categories?.[1]?.trim() ?? null)
+      const subgenre = subgenreFromCat ?? olSubjects.get(normalizedTitle) ?? null
+
       results.push({
         source: 'books',
         sourceId: b.id,
@@ -275,12 +300,8 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         platform: null,
         author: b.volumeInfo.authors?.[0] ?? null,
         publisher: b.volumeInfo.publisher ?? null,
-        genre: (() => { const c = b.volumeInfo.categories?.[0] ?? null; return c ? c.split(' / ')[0].trim() : null })(),
-        subgenre: (() => {
-          const c = b.volumeInfo.categories?.[0] ?? null
-          if (c?.includes(' / ')) return c.split(' / ')[1].trim()
-          return b.volumeInfo.categories?.[1]?.trim() ?? null
-        })(),
+        genre,
+        subgenre,
         volumes: b.volumeInfo.pageCount ? `${b.volumeInfo.pageCount} páginas` : null,
         synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
         _pop: 1000 - results.length * 100,
