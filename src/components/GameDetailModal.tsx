@@ -131,6 +131,29 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
                   {localItem.synopsis}
                 </p>
               )}
+
+              {['movie', 'series', 'anime'].includes(localItem.kind) && (localItem.director || localItem.duration || localItem.whereToWatch) && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+                  {localItem.director && (
+                    <div>
+                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block">Diretor</span>
+                      <span className="text-[12px] text-text-1">{localItem.director}</span>
+                    </div>
+                  )}
+                  {localItem.duration && (
+                    <div>
+                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block">Duração</span>
+                      <span className="text-[12px] text-text-1">{localItem.duration}</span>
+                    </div>
+                  )}
+                  {localItem.whereToWatch && (
+                    <div>
+                      <span className="text-[9px] uppercase tracking-[0.1em] text-text-2/50 font-bold block">Onde assistir</span>
+                      <span className="text-[12px] text-text-1">{localItem.whereToWatch}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

@@ -175,7 +175,7 @@ export function GameCardListAudio({ item, index = 0, statusLabel, onRemove }: { 
       style={{ animationDelay: `${index * 0.03}s` }}>
       <ListItemHeader item={item} />
       <div className="flex-1 grid items-center gap-4 pl-4 border-l border-bg-2/30"
-        style={{ gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,0.8fr) minmax(0,1fr)' }}>
+        style={{ gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.8fr) minmax(0,1fr)' }}>
         <Col label={item.kind === 'movie' ? 'Diretor' : 'Estúdio'}>
           {item.director ? <span className="truncate block">{item.director}</span> : EMPTY}
         </Col>
@@ -184,11 +184,6 @@ export function GameCardListAudio({ item, index = 0, statusLabel, onRemove }: { 
         </Col>
         <Col label={item.kind === 'movie' ? 'Duração' : item.kind === 'series' ? 'Temporadas' : 'Episódios'}>
           {item.duration ? <span>{item.duration}</span> : EMPTY}
-        </Col>
-        <Col label="Onde assistir">
-          {item.whereToWatch ? (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-bg-2/60 text-text-1">{item.whereToWatch}</span>
-          ) : EMPTY}
         </Col>
         <Col label="Status">
           <span className={`text-[11px] font-bold px-2.5 py-1 rounded-[7px] inline-flex items-center gap-1.5 font-display tracking-[.06em] uppercase ${STATUS_COLORS[item.status]}`}>
