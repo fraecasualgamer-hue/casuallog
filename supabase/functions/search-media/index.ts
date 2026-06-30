@@ -257,9 +257,24 @@ serve(async (req) => {
     if (enabledSources.includes('anilist')) searches.push(searchAniList(query))
     if (enabledSources.includes('books')) searches.push(searchBooks(query))
 
-    const results = (await Promise.all(searches)).flat()
+    const raw = (await Promise.all(searches)).flat()
 
-    return new Response(JSON.stringify(results), {
+    // Ordena por relevância ao título: match exato > começa com > contém
+    const q = query.toLowerCase()
+    raw.sort((a, b) => {
+      const score = (title: string) => {
+        const t = title.toLowerCase()
+        if (t === q) return 4
+        if (t.startsWith(q)) return 3
+        const words = q.split(/\s+/)
+        if (words.every((w) => t.includes(w))) return 2
+        if (t.includes(q)) return 1
+        return 0
+      }
+      return score(b.title) - score(a.title)
+    })
+
+    return new Response(JSON.stringify(raw), {
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   } catch (err) {
