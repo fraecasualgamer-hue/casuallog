@@ -276,7 +276,11 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         author: b.volumeInfo.authors?.[0] ?? null,
         publisher: b.volumeInfo.publisher ?? null,
         genre: (() => { const c = b.volumeInfo.categories?.[0] ?? null; return c ? c.split(' / ')[0].trim() : null })(),
-        subgenre: (() => { const c = b.volumeInfo.categories?.[0] ?? null; return c?.includes(' / ') ? c.split(' / ')[1].trim() : null })(),
+        subgenre: (() => {
+          const c = b.volumeInfo.categories?.[0] ?? null
+          if (c?.includes(' / ')) return c.split(' / ')[1].trim()
+          return b.volumeInfo.categories?.[1]?.trim() ?? null
+        })(),
         volumes: b.volumeInfo.pageCount ? `${b.volumeInfo.pageCount} páginas` : null,
         synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
         _pop: 1000 - results.length * 100,
