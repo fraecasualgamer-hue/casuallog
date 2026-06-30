@@ -96,6 +96,28 @@ const TMDB_GENRES: Record<number, string> = {
   10765: 'Ficção Científica e Fantasia', 10766: 'Novela', 10767: 'Talk Show', 10768: 'Guerra e Política',
 }
 
+async function fetchTMDBDetails(id: number, type: 'movie' | 'tv'): Promise<{ director: string | null; duration: string | null }> {
+  try {
+    const endpoint = type === 'movie'
+      ? `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=pt-BR&append_to_response=credits`
+      : `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_KEY}&language=pt-BR&append_to_response=credits`
+    const res = await fetch(endpoint)
+    const d = await res.json()
+    if (type === 'movie') {
+      const director = d.credits?.crew?.find((c: any) => c.job === 'Director')?.name ?? null
+      const runtime = d.runtime ? `${d.runtime} min` : null
+      return { director, duration: runtime }
+    } else {
+      const creator = d.created_by?.[0]?.name ?? null
+      const ep = d.episode_run_time?.[0]
+      const duration = ep ? `${ep} min/ep` : null
+      return { director: creator, duration }
+    }
+  } catch {
+    return { director: null, duration: null }
+  }
+}
+
 async function searchTMDB(query: string): Promise<SearchResult[]> {
   if (!TMDB_KEY) return []
   try {
@@ -103,10 +125,14 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
       `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&language=pt-BR&page=1`,
     )
     const data = await res.json()
-    return (data.results ?? [])
+    const hits = (data.results ?? [])
       .filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv')
       .slice(0, 6)
-      .map((r: any) => ({
+
+    return await Promise.all(hits.map(async (r: any) => {
+      const type = r.media_type === 'movie' ? 'movie' : 'tv'
+      const { director, duration } = await fetchTMDBDetails(r.id, type)
+      return {
         source: 'tmdb',
         sourceId: String(r.id),
         kind: r.media_type === 'movie' ? 'movie' : 'series',
@@ -120,8 +146,11 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
         genre: r.genre_ids?.[0] ? TMDB_GENRES[r.genre_ids[0]] ?? null : null,
         platform: null,
         synopsis: r.overview ? r.overview.slice(0, 300) : null,
+        director,
+        duration,
         _pop: r.popularity ?? 0,
-      }))
+      }
+    }))
   } catch {
     return []
   }
