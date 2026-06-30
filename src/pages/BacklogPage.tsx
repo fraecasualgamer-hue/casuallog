@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LayoutGrid, List, Plus, Gamepad2, Film, BookOpen, Tv, Clapperboard, Joystick, ArrowUpDown, Search, X } from 'lucide-react'
+import { LayoutGrid, List, Plus, Gamepad2, Film, BookOpen, Tv, Clapperboard, Joystick, ArrowUpDown, Search, X, RefreshCw } from 'lucide-react'
 import TopBar from '../components/TopBar'
 import { GameCardGrid, GameCardListGame, GameCardListAudio, GameCardListRead } from '../components/GameCard'
 import GameDetailModal from '../components/GameDetailModal'
 import SearchModal from '../components/SearchModal'
 import { useBacklog } from '../context/BacklogContext'
+import { refreshMediaItem } from '../lib/backlog-service'
 import { type Status, type BacklogItem, type MediaKind } from '../data/mock'
 
 type ViewMode = 'grid' | 'list'
@@ -137,6 +138,22 @@ export default function BacklogPage() {
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [searchQuery, setSearchQuery] = useState('')
   const [showSortMenu, setShowSortMenu] = useState(false)
+  const [refreshingAll, setRefreshingAll] = useState(false)
+  const [refreshProgress, setRefreshProgress] = useState<{ done: number; total: number } | null>(null)
+
+  async function handleRefreshAll() {
+    const targets = items.filter((i) => CATEGORY_KINDS[category].includes(i.kind) && i.source && i.sourceId)
+    if (targets.length === 0) return
+    setRefreshingAll(true)
+    setRefreshProgress({ done: 0, total: targets.length })
+    for (let i = 0; i < targets.length; i++) {
+      const updates = await refreshMediaItem(targets[i])
+      if (updates) updateItem(targets[i].id, updates)
+      setRefreshProgress({ done: i + 1, total: targets.length })
+    }
+    setRefreshingAll(false)
+    setRefreshProgress(null)
+  }
 
   const categoryItems = items.filter((i) => CATEGORY_KINDS[category].includes(i.kind))
   const subFiltered = applySubFilter(categoryItems, subFilter)
@@ -298,6 +315,15 @@ export default function BacklogPage() {
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleRefreshAll}
+              disabled={refreshingAll}
+              title="Atualizar metadados de todos da categoria"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] border border-bg-2/50 bg-bg-1/40 text-text-2 text-[12px] hover:text-text-1 hover:border-bg-3 transition-all disabled:opacity-50"
+            >
+              <RefreshCw size={13} className={refreshingAll ? 'animate-spin' : ''} />
+              {refreshProgress ? `${refreshProgress.done}/${refreshProgress.total}` : 'Atualizar todos'}
+            </button>
             <button
               onClick={() => setShowSearch(true)}
               className="flex items-center gap-1.5 px-4 py-2 bg-accent text-bg-0 text-[12px] font-display font-bold uppercase tracking-wide hover:brightness-110 transition-all duration-200 shrink-0"
