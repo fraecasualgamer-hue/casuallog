@@ -243,6 +243,21 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
   }
 }
 
+async function translateToPtBR(text: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|pt-BR`,
+    )
+    const data = await res.json()
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
+      return data.responseData.translatedText
+    }
+    return text
+  } catch {
+    return text
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
@@ -265,6 +280,15 @@ serve(async (req) => {
     if (enabledSources.includes('books')) searches.push(searchBooks(query))
 
     const raw = (await Promise.all(searches)).flat()
+
+    // Traduz sinopses de IGDB e AniList para pt-BR em paralelo
+    await Promise.all(
+      raw.map(async (r) => {
+        if (r.synopsis && (r.source === 'igdb' || r.source === 'anilist')) {
+          r.synopsis = await translateToPtBR(r.synopsis)
+        }
+      }),
+    )
 
     // Ordena por relevância ao título (primário) e popularidade (desempate)
     const q = query.toLowerCase()
