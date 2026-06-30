@@ -27,6 +27,19 @@ interface Props {
   onUpdate: (id: string, updates: Partial<BacklogItem>) => void
 }
 
+function getStatusLabels(kind: string): Record<Status, string> {
+  const isAudio = ['movie', 'series', 'anime'].includes(kind)
+  const isRead = ['book', 'manga'].includes(kind)
+  return {
+    quero:      isAudio ? 'Quero assistir' : isRead ? 'Quero ler'   : 'Quero jogar',
+    jogando:    isAudio ? 'Assistindo'     : isRead ? 'Lendo'        : 'Jogando',
+    pausado:    'Pausado',
+    zerado:     isAudio ? 'Assistido'      : isRead ? 'Lido'         : 'Zerado',
+    na_estante: 'Platinado',
+    abandonado: 'Abandonado',
+  }
+}
+
 export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
   const [status, setStatus] = useState<Status>(item.status)
   const [tier, setTier] = useState<number | null>(item.tier)
@@ -102,7 +115,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            {(Object.keys(STATUS_LABELS) as Status[])
+            {(Object.keys(STATUS_COLORS) as Status[])
               .filter((s) => s !== 'na_estante' || item.kind === 'game')
               .map((s) => (
                 <button
@@ -114,7 +127,7 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
                       : 'border-bg-2 text-text-2 hover:border-text-2/40 hover:text-text-1'
                   }`}
                 >
-                  {STATUS_LABELS[s]}
+                  {getStatusLabels(item.kind)[s]}
                 </button>
               ))}
           </div>
