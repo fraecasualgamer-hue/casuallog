@@ -102,19 +102,21 @@ export default function GameDetailModal({ item, onClose, onUpdate }: Props) {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            {(Object.keys(STATUS_LABELS) as Status[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => handleStatusChange(s)}
-                className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all duration-150 ${
-                  status === s
-                    ? STATUS_COLORS[s]
-                    : 'border-bg-2 text-text-2 hover:border-text-2/40 hover:text-text-1'
-                }`}
-              >
-                {STATUS_LABELS[s]}
-              </button>
-            ))}
+            {(Object.keys(STATUS_LABELS) as Status[])
+              .filter((s) => s !== 'na_estante' || item.kind === 'game')
+              .map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleStatusChange(s)}
+                  className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all duration-150 ${
+                    status === s
+                      ? STATUS_COLORS[s]
+                      : 'border-bg-2 text-text-2 hover:border-text-2/40 hover:text-text-1'
+                  }`}
+                >
+                  {STATUS_LABELS[s]}
+                </button>
+              ))}
           </div>
         </div>
 
