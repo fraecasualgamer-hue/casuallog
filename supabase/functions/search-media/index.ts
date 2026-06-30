@@ -19,6 +19,7 @@ interface SearchResult {
   releaseYear: number | null
   platform: string | null
   genre?: string | null
+  subgenre?: string | null
   author?: string | null
   director?: string | null
   publisher?: string | null
@@ -27,6 +28,7 @@ interface SearchResult {
   developer?: string | null
   availablePlatforms?: string[]
   synopsis?: string | null
+  whereToWatch?: string | null
   _pop?: number // popularidade interna para ordenação, removido antes de retornar
 }
 
@@ -44,7 +46,7 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
         Authorization: `Bearer ${IGDB_TOKEN}`,
         'Content-Type': 'text/plain',
       },
-      body: `search "${query}"; fields name,cover.image_id,first_release_date,platforms.abbreviation,genres.name,involved_companies.company.name,involved_companies.developer,category,rating_count,summary; limit 15;`,
+      body: `search "${query}"; fields name,cover.image_id,first_release_date,platforms.abbreviation,genres.name,themes.name,involved_companies.company.name,involved_companies.developer,category,rating_count,summary; limit 15;`,
     })
     const data = await res.json()
     if (!Array.isArray(data)) return []
@@ -71,6 +73,7 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
             : null,
           platform: preferred,
           genre: g.genres?.[0]?.name ?? null,
+          subgenre: g.themes?.[0]?.name ?? null,
           developer,
           availablePlatforms: platforms.length > 0 ? platforms : undefined,
           synopsis: g.summary ? g.summary.slice(0, 300) : null,
@@ -151,6 +154,7 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
           ? parseInt((r.release_date ?? r.first_air_date).substring(0, 4))
           : null,
         genre: r.genre_ids?.[0] ? TMDB_GENRES[r.genre_ids[0]] ?? null : null,
+        subgenre: r.genre_ids?.[1] ? TMDB_GENRES[r.genre_ids[1]] ?? null : null,
         platform: null,
         synopsis: r.overview ? r.overview.slice(0, 300) : null,
         director,
@@ -211,6 +215,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       releaseYear: m.startDate?.year ?? null,
       platform: null,
       genre: m.genres?.[0] ?? null,
+      subgenre: m.genres?.[1] ?? null,
       director: m.studios?.nodes?.[0]?.name ?? null,
       duration: m.episodes ? `${m.episodes} episódios` : null,
       synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
@@ -225,6 +230,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       releaseYear: m.startDate?.year ?? null,
       platform: null,
       genre: m.genres?.[0] ?? null,
+      subgenre: m.genres?.[1] ?? null,
       author: m.staff?.edges?.[0]?.node?.name?.full ?? null,
       volumes: m.volumes ? `${m.volumes} volumes` : m.chapters ? `${m.chapters} capítulos` : null,
       synopsis: m.description ? m.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
@@ -269,7 +275,8 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         platform: null,
         author: b.volumeInfo.authors?.[0] ?? null,
         publisher: b.volumeInfo.publisher ?? null,
-        genre: b.volumeInfo.categories?.[0] ?? null,
+        genre: (() => { const c = b.volumeInfo.categories?.[0] ?? null; return c ? c.split(' / ')[0].trim() : null })(),
+        subgenre: (() => { const c = b.volumeInfo.categories?.[0] ?? null; return c?.includes(' / ') ? c.split(' / ')[1].trim() : null })(),
         volumes: b.volumeInfo.pageCount ? `${b.volumeInfo.pageCount} páginas` : null,
         synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
         _pop: 1000 - results.length * 100,

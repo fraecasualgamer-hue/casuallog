@@ -9,6 +9,7 @@ export interface SearchResult {
   releaseYear: number | null
   platform: string | null
   genre?: string | null
+  subgenre?: string | null
   author?: string | null
   director?: string | null
   publisher?: string | null

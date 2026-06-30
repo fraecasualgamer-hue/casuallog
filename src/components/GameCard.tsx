@@ -175,12 +175,15 @@ export function GameCardListAudio({ item, index = 0, statusLabel, onRemove }: { 
       style={{ animationDelay: `${index * 0.03}s` }}>
       <ListItemHeader item={item} />
       <div className="flex-1 grid items-center gap-4 pl-4 border-l border-bg-2/30"
-        style={{ gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.8fr) minmax(0,1fr)' }}>
+        style={{ gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,0.9fr) minmax(0,0.9fr) minmax(0,0.9fr) minmax(0,0.8fr) minmax(0,1fr)' }}>
         <Col label={item.kind === 'movie' ? 'Diretor' : 'Estúdio'}>
           {item.director ? <span className="truncate block">{item.director}</span> : EMPTY}
         </Col>
         <Col label="Gênero">
           {item.genre ? <span>{item.genre}</span> : EMPTY}
+        </Col>
+        <Col label="Subgênero">
+          {item.subgenre ? <span>{item.subgenre}</span> : EMPTY}
         </Col>
         <Col label={item.kind === 'movie' ? 'Duração' : item.kind === 'series' ? 'Temporadas' : 'Episódios'}>
           {item.duration ? <span>{item.duration}</span> : EMPTY}
@@ -213,12 +216,15 @@ export function GameCardListRead({ item, index = 0, statusLabel, onRemove }: { i
       style={{ animationDelay: `${index * 0.03}s` }}>
       <ListItemHeader item={item} />
       <div className="flex-1 grid items-center gap-4 pl-4 border-l border-bg-2/30"
-        style={{ gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,0.8fr) minmax(0,1fr)' }}>
+        style={{ gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,0.9fr) minmax(0,0.9fr) minmax(0,0.9fr) minmax(0,0.9fr) minmax(0,0.8fr) minmax(0,1fr)' }}>
         <Col label="Autor">
           {item.author ? <span className="truncate block">{item.author}</span> : EMPTY}
         </Col>
         <Col label="Gênero">
           {item.genre ? <span>{item.genre}</span> : EMPTY}
+        </Col>
+        <Col label="Subgênero">
+          {item.subgenre ? <span>{item.subgenre}</span> : EMPTY}
         </Col>
         <Col label={item.kind === 'manga' ? 'Volumes' : 'Páginas'}>
           {item.volumes ? <span>{item.volumes}</span> : EMPTY}

@@ -174,6 +174,7 @@ export async function refreshMediaItem(item: BacklogItem): Promise<Partial<Backl
 
     const updates: any = {
       genre: match.genre ?? null,
+      subgenre: match.subgenre ?? null,
       developer: match.developer ?? null,
       director: match.director ?? null,
       duration: match.duration ?? null,
@@ -189,6 +190,7 @@ export async function refreshMediaItem(item: BacklogItem): Promise<Partial<Backl
 
     return {
       genre: match.genre ?? undefined,
+      subgenre: match.subgenre ?? undefined,
       developer: match.developer ?? undefined,
       director: match.director ?? undefined,
       duration: match.duration ?? undefined,
