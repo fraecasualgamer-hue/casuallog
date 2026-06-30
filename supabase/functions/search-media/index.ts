@@ -235,6 +235,7 @@ async function searchBooks(query: string): Promise<SearchResult[]> {
         genre: b.volumeInfo.categories?.[0] ?? null,
         volumes: b.volumeInfo.pageCount ? `${b.volumeInfo.pageCount} páginas` : null,
         synopsis: b.volumeInfo.description ? b.volumeInfo.description.replace(/<[^>]*>/g, '').slice(0, 300) : null,
+        _pop: 1000 - results.length * 100,
       })
 
       if (results.length >= 8) break
