@@ -175,11 +175,17 @@ export default function SearchModal({ onClose, onAdd, existingIds }: Props) {
                       <p className="text-sm font-medium text-text-0 truncate">{item.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <Icon size={10} className="text-text-2" />
+                        <span className="text-[10px] text-text-2/70">
+                          {{ game: 'Game', movie: 'Filme', series: 'Série', anime: 'Anime', manga: 'Mangá', book: 'Livro' }[item.kind] ?? item.kind}
+                        </span>
+                        {(item.kind === 'book' || item.kind === 'manga') && item.author && (
+                          <span className="text-[10px] text-text-2">· {item.author}</span>
+                        )}
                         {item.platform && (
-                          <span className="text-[10px] font-mono text-text-2">{item.platform}</span>
+                          <span className="text-[10px] font-mono text-text-2">· {item.platform}</span>
                         )}
                         {item.releaseYear && (
-                          <span className="text-[10px] text-text-2">{item.releaseYear}</span>
+                          <span className="text-[10px] text-text-2">· {item.releaseYear}</span>
                         )}
                       </div>
                     </div>
