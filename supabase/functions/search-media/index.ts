@@ -26,6 +26,7 @@ interface SearchResult {
   duration?: string | null
   developer?: string | null
   availablePlatforms?: string[]
+  _pop?: number // popularidade interna para ordenação, removido antes de retornar
 }
 
 // Categorias IGDB: 0=jogo principal, 8=remake, 9=remaster, 10=versão expandida,
@@ -42,7 +43,7 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
         Authorization: `Bearer ${IGDB_TOKEN}`,
         'Content-Type': 'text/plain',
       },
-      body: `search "${query}"; fields name,cover.image_id,first_release_date,platforms.abbreviation,genres.name,involved_companies.company.name,involved_companies.developer,category; limit 15;`,
+      body: `search "${query}"; fields name,cover.image_id,first_release_date,platforms.abbreviation,genres.name,involved_companies.company.name,involved_companies.developer,category,rating_count; limit 15;`,
     })
     const data = await res.json()
     if (!Array.isArray(data)) return []
@@ -55,6 +56,7 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
       const preferred = platforms.find((p) => p === 'PC') ?? platforms[0] ?? null
       return {
         category: g.category as number,
+        pop: (IGDB_CATEGORY_PRIORITY.has(g.category) ? 10000 : 0) + (g.rating_count ?? 0),
         result: {
           source: 'igdb',
           sourceId: String(g.id),
@@ -70,16 +72,12 @@ async function searchIGDB(query: string): Promise<SearchResult[]> {
           genre: g.genres?.[0]?.name ?? null,
           developer,
           availablePlatforms: platforms.length > 0 ? platforms : undefined,
+          _pop: (IGDB_CATEGORY_PRIORITY.has(g.category) ? 10000 : 0) + (g.rating_count ?? 0),
         } as SearchResult,
       }
     })
 
-    // jogos principais/remakes/remasters primeiro, edições/DLCs/updates depois
-    mapped.sort((a, b) => {
-      const aMain = IGDB_CATEGORY_PRIORITY.has(a.category) ? 0 : 1
-      const bMain = IGDB_CATEGORY_PRIORITY.has(b.category) ? 0 : 1
-      return aMain - bMain
-    })
+    mapped.sort((a, b) => b.pop - a.pop)
 
     return mapped.slice(0, 8).map((m) => m.result)
   } catch {
@@ -119,6 +117,7 @@ async function searchTMDB(query: string): Promise<SearchResult[]> {
           : null,
         genre: r.genre_ids?.[0] ? TMDB_GENRES[r.genre_ids[0]] ?? null : null,
         platform: null,
+        _pop: r.popularity ?? 0,
       }))
   } catch {
     return []
@@ -131,7 +130,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       query: `query ($search: String) {
         Page(perPage: 6) {
           media(search: $search, type: ANIME, sort: POPULARITY_DESC) {
-            id title { romaji } coverImage { large } startDate { year } format episodes genres
+            id title { romaji } coverImage { large } startDate { year } format episodes genres popularity
             studios(isMain: true) { nodes { name } }
           }
         }
@@ -142,7 +141,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       query: `query ($search: String) {
         Page(perPage: 4) {
           media(search: $search, type: MANGA, sort: POPULARITY_DESC) {
-            id title { romaji } coverImage { large } startDate { year } format volumes chapters genres
+            id title { romaji } coverImage { large } startDate { year } format volumes chapters genres popularity
             staff(perPage: 1, sort: RELEVANCE) { edges { node { name { full } } } }
           }
         }
@@ -163,7 +162,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
     ])
     const animeData = await animeRes.json()
     const mangaData = await mangaRes.json()
-    const anime = (animeData.data?.Page?.media ?? []).map((m: any) => ({
+    const anime = (animeData.data?.Page?.media ?? []).map((m: any, i: number) => ({
       source: 'anilist',
       sourceId: String(m.id),
       kind: 'anime',
@@ -174,8 +173,9 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       genre: m.genres?.[0] ?? null,
       director: m.studios?.nodes?.[0]?.name ?? null,
       duration: m.episodes ? `${m.episodes} episódios` : null,
+      _pop: m.popularity ?? (1000 - i * 100),
     }))
-    const manga = (mangaData.data?.Page?.media ?? []).map((m: any) => ({
+    const manga = (mangaData.data?.Page?.media ?? []).map((m: any, i: number) => ({
       source: 'anilist',
       sourceId: String(m.id),
       kind: 'manga',
@@ -186,6 +186,7 @@ async function searchAniList(query: string): Promise<SearchResult[]> {
       genre: m.genres?.[0] ?? null,
       author: m.staff?.edges?.[0]?.node?.name?.full ?? null,
       volumes: m.volumes ? `${m.volumes} volumes` : m.chapters ? `${m.chapters} capítulos` : null,
+      _pop: m.popularity ?? (1000 - i * 100),
     }))
     return [...anime, ...manga]
   } catch {
@@ -259,22 +260,27 @@ serve(async (req) => {
 
     const raw = (await Promise.all(searches)).flat()
 
-    // Ordena por relevância ao título: match exato > começa com > contém
+    // Ordena por relevância ao título (primário) e popularidade (desempate)
     const q = query.toLowerCase()
+    const titleScore = (title: string) => {
+      const t = title.toLowerCase()
+      if (t === q) return 4
+      if (t.startsWith(q)) return 3
+      const words = q.split(/\s+/)
+      if (words.every((w) => t.includes(w))) return 2
+      if (t.includes(q)) return 1
+      return 0
+    }
     raw.sort((a, b) => {
-      const score = (title: string) => {
-        const t = title.toLowerCase()
-        if (t === q) return 4
-        if (t.startsWith(q)) return 3
-        const words = q.split(/\s+/)
-        if (words.every((w) => t.includes(w))) return 2
-        if (t.includes(q)) return 1
-        return 0
-      }
-      return score(b.title) - score(a.title)
+      const ts = titleScore(b.title) - titleScore(a.title)
+      if (ts !== 0) return ts
+      return (b._pop ?? 0) - (a._pop ?? 0)
     })
 
-    return new Response(JSON.stringify(raw), {
+    // Remove campo interno antes de retornar
+    const results = raw.map(({ _pop, ...r }) => r)
+
+    return new Response(JSON.stringify(results), {
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   } catch (err) {
